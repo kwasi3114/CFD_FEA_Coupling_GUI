@@ -1,0 +1,1 @@
+/home/kwasi_dp/CFD_FEA_Coupling_GUI/stl/tesla.stl

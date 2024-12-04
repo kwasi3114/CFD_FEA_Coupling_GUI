@@ -25,7 +25,7 @@ geometry
     mesh
     {
         type triSurfaceMesh;
-        file "stl_test.STL";
+        file "tesla.stl";
     };
 };
 
