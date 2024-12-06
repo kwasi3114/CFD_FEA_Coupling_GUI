@@ -3,22 +3,27 @@ import subprocess
 
 
 class BlockMeshGenerator:
-    def __init__(self, case_dir="blockmesh_case"):
+    def __init__(self, case_dir="openfoam_case"):
         self.case_dir = case_dir
         self.system_dir = os.path.join(self.case_dir, "system")
         self.constant_dir = os.path.join(self.case_dir, "constant")
         self.poly_mesh_dir = os.path.join(self.constant_dir, "polyMesh")
         self.block_mesh_dict_path = os.path.join(self.system_dir, "blockMeshDict")
         self.create_case_directories()
+        
+        
+        #openfoam_dir = "openfoam_case"
+        #system_dir = os.path.join(openfoam_dir, "system")
+        #os.makedirs(system_dir, exist_ok=True)
 
     def create_case_directories(self):
         """Create the necessary OpenFOAM case directory structure."""
         os.makedirs(self.system_dir, exist_ok=True)
         os.makedirs(self.poly_mesh_dir, exist_ok=True)
 
-    def write_block_mesh_dict(self):
+    def write_block_mesh_dict(self, vertices, blocks, edges, boundary, merge_patch_pairs):
         """Write a basic blockMeshDict file for a simple rectangular block."""
-        block_mesh_dict = """
+        block_mesh_dict = f"""
 /*--------------------------------*- C++ -*----------------------------------*\\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
@@ -28,72 +33,41 @@ class BlockMeshGenerator:
 \\*--------------------------------------------------------------------------*/
 
 FoamFile
-{
+{{
     version     2.0;
     format      ascii;
     class       dictionary;
     object      blockMeshDict;
-}
+}}
 
 // Define vertices of the block
 vertices
 (
-    (0 0 0)       // Vertex 0
-    (1 0 0)       // Vertex 1
-    (1 1 0)       // Vertex 2
-    (0 1 0)       // Vertex 3
-    (0 0 1)       // Vertex 4
-    (1 0 1)       // Vertex 5
-    (1 1 1)       // Vertex 6
-    (0 1 1)       // Vertex 7
+    {vertices}
 );
 
 // Define a single block using hexahedral cells
 blocks
 (
-    hex (0 1 2 3 4 5 6 7) (10 10 10) simpleGrading (1 1 1)
+    {blocks}
 );
 
 // Boundary conditions
 edges
 (
+    {edges}
 );
 
 // Patch definitions
 boundary
 (
-    inlet
-    {
-        type patch;
-        faces
-        (
-            (0 4 7 3)
-        );
-    }
-    outlet
-    {
-        type patch;
-        faces
-        (
-            (1 5 6 2)
-        );
-    }
-    walls
-    {
-        type wall;
-        faces
-        (
-            (0 1 5 4)
-            (2 3 7 6)
-            (0 3 2 1)
-            (4 5 6 7)
-        );
-    }
+    {boundary}
 );
 
 // Default internal field
 mergePatchPairs
 (
+    {merge_patch_pairs}
 );
 """
         with open(self.block_mesh_dict_path, "w") as f:
