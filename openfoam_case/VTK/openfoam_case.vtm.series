@@ -1,0 +1,6 @@
+{
+  "file-series-version" : "1.0",
+  "files" : [
+    { "name" : "openfoam_case_0.vtm", "time" : 0 }
+  ]
+}

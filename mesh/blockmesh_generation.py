@@ -79,23 +79,52 @@ mergePatchPairs
             print("Running blockMesh...")
             subprocess.run(["blockMesh", "-case", self.case_dir], check=True)
             print("Mesh generation completed successfully!")
+
+            print("Converting mesh to VTK format...")
+            subprocess.run(["foamToVTK", "-case", self.case_dir], check=True)
+            print("Conversion to VTK format completed successfully!")
         except subprocess.CalledProcessError as e:
             print(f"Error running blockMesh: {e}")
 
-    def visualize_mesh(self):
+    def visualize_mesh(self, stl_file):
         """Visualize the generated mesh using pyvista."""
         import pyvista as pv
 
         try:
-            mesh_file = os.path.join(self.poly_mesh_dir, "faces")
-            if not os.path.exists(mesh_file):
-                raise FileNotFoundError(f"Mesh file not found: {mesh_file}")
+            #mesh_file = os.path.join(self.poly_mesh_dir, "faces")
+            #if not os.path.exists(mesh_file):
+            #    raise FileNotFoundError(f"Mesh file not found: {mesh_file}")
+            vtk_dir = os.path.join(self.case_dir, "VTK")
+            vtk_file = os.path.join(vtk_dir, "openfoam_case_0.vtm")
+            #vtk_file = os.path.join(vtk_dir, "internal.vtk")
+
+            if not os.path.exists(vtk_file):
+                raise FileNotFoundError(f"VTK file not found: {vtk_file}")
 
             print("Visualizing the generated mesh...")
-            mesh = pv.read(mesh_file)
+            background_mesh = pv.read(vtk_file)
+            stl_mesh = pv.read(stl_file)
             plotter = pv.Plotter()
-            plotter.add_mesh(mesh, color="lightblue", show_edges=True)
+
+            plotter.add_mesh(stl_mesh, color="gray", opacity=0.5, label="STL Geometry")
+            plotter.add_mesh(
+                background_mesh,
+                color="lightblue",
+                opacity=0.7,
+                show_edges=True,
+                edge_color="blue",
+                label="Generated Mesh",
+            )
+            #plotter.add_mesh(background_mesh, color="lightblue", show_edges=True, opacity=0.7)  # Semi-transparent
+
+            plotter.add_legend()
             plotter.show()
+
+            #print("Visualizing the generated mesh...")
+            #mesh = pv.read(mesh_file)
+            #plotter = pv.Plotter()
+            #plotter.add_mesh(mesh, color="lightblue", show_edges=True)
+            #plotter.show()
         except Exception as e:
             print(f"Failed to visualize mesh: {e}")
 

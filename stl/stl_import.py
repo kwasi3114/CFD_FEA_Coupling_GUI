@@ -1,6 +1,7 @@
 from tkinter import filedialog, messagebox
 import pyvista as pv
 from PIL import Image, ImageTk
+import subprocess
 
 def load_and_display_stl(app):
     """Load and display an STL file."""
@@ -13,8 +14,37 @@ def load_and_display_stl(app):
 
     try:
         app.log_message(f"Loading STL file: {file_path}")
-        mesh = pv.read(file_path)
-        write_path(file_path)
+        #mesh = pv.read(file_path)
+        orig_stl = pv.read(file_path)
+        stl_bounds = orig_stl.bounds
+        #write_path(file_path)
+
+        #center STL file
+        stl_center = [(stl_bounds[1] + stl_bounds[0]) / 2,
+                      (stl_bounds[3] + stl_bounds[2]) / 2,
+                      (stl_bounds[5] + stl_bounds[4]) / 2]
+
+        scale_factors = (0.1, 0.1, 0.1)
+        translation_vector = (-stl_center[0], -stl_center[1], -stl_center[2])
+
+        scale_arg = f"({scale_factors[0]} {scale_factors[1]} {scale_factors[2]})"
+        translate_arg = f"({translation_vector[0]} {translation_vector[1]} {translation_vector[2]})"
+
+        output_path = file_path.replace(".stl", "_translated.stl")
+
+        command = [
+            "surfaceTransformPoints",
+            "-scale", scale_arg,
+            "-translate", translate_arg,
+            file_path,
+            output_path
+        ]
+
+        subprocess.run(command, check=True)
+        print(f"STL file successfully transformed: {output_path}")
+
+        mesh = pv.read(output_path)
+        write_path(output_path)
 
         # Display STL file in PyVista plotter
         plotter = pv.Plotter(window_size=(600, 400), off_screen=True)

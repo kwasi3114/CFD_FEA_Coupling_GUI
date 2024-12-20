@@ -3,6 +3,7 @@ from tkinter import ttk, simpledialog, messagebox
 from stl.stl_import import load_and_display_stl
 from mesh.mesh_creation import generate_mesh
 from mesh.blockmesh_generation import BlockMeshGenerator
+from solve.define_params import DefineParams
 
 
 class MeshGenerationApp:
@@ -20,12 +21,20 @@ class MeshGenerationApp:
         self.setup_stl_tab()
 
         # Add Mesh Generation tab
+        self.block_mesh_generator = BlockMeshGenerator()
         self.mesh_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.mesh_tab, text="Mesh Generator")
         self.setup_mesh_tab()
 
         # BlockMesh generator instance
-        self.block_mesh_generator = BlockMeshGenerator()
+        #self.block_mesh_generator = BlockMeshGenerator()
+
+        # Add CFD Solver 
+        self.solve_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.solve_tab, text="CFD Solver")
+        self.setup_solve_tab()
+
+        self.params_gen = DefineParams()
 
     def setup_stl_tab(self):
         """Set up the STL Viewer tab."""
@@ -56,6 +65,14 @@ class MeshGenerationApp:
         )
         self.block_mesh_button.pack(pady=10)
 
+        self.visualize_button = ttk.Button(
+            self.mesh_tab,
+            text="Visualize Mesh and STL",
+            command=lambda: self.block_mesh_generator.visualize_mesh(f.read()),
+            #command=self.visualize_mesh_and_stl,
+        )
+        self.visualize_button.pack(pady=10)
+
         # Log area for messages
         self.log_frame = ttk.Frame(self.mesh_tab)
         self.log_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
@@ -70,6 +87,85 @@ class MeshGenerationApp:
         self.log_text.see(tk.END)
         self.log_text.config(state=tk.DISABLED)
 
+    def setup_solve_tab(self):
+        """setup solve tab"""
+        self.params_button = ttk.Button(
+            self.solve_tab,
+            text="Generate Param Files for icoFoam Solver",
+            command=self.configure_params,
+        )
+        self.params_button.pack(pady=10)
+
+        # Log area for messages
+        self.log_frame = ttk.Frame(self.solve_tab)
+        self.log_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+        self.log_text = tk.Text(self.log_frame, wrap=tk.WORD, state=tk.DISABLED, height=15)
+        self.log_text.pack(fill=tk.BOTH, expand=True)
+
+    def configure_params(self):
+        """Open pop-up..."""
+        def on_submit():
+            try:
+                # Get values from the fields
+                velocity_dimensions = velocity_dimensions.get("1.0", tk.END).strip()
+                velocity_if = velocity_if.get("1.0", tk.END).strip()
+                velocity_bf = velocity_bf.get("1.0", tk.END).strip()
+                pressure_dimensions = pressure_dimensions.get("1.0", tk.END).strip()
+                pressure_if = pressure_if.get("1.0", tk.END).strip()
+                pressure_bf = pressure_bf.get("1.0", tk.END).strip()
+
+                # Write parameter files
+                self.params_gen.write_vel_params(
+                    dimensions=dimensions,
+                    internalField=internalField,
+                    boundaryField=boundaryField
+                )
+
+                self.params_gen.write_pres_params(
+                    dimensions=dimensions,
+                    internalField=internalField,
+                    boundaryField=boundaryField
+                )
+                
+                self.log_message("U and P Parameter generation completed successfully.")
+                popup.destroy()
+
+            except Exception as e:
+                messagebox.showerror("Error", f"An error occurred: {e}")
+        
+        ttk.Label(popup, text="Velocity Dimensions:").pack(anchor="w", padx=10)
+        velocity_dimensions = tk.Text(popup, height=5, width=70)
+        velocity_dimensions.pack(padx=10, pady=5)
+
+        ttk.Label(popup, text="Velocity Internal Field:").pack(anchor="w", padx=10)
+        velocity_if = tk.Text(popup, height=5, width=70)
+        velocity_if.pack(padx=10, pady=5)
+
+        ttk.Label(popup, text="Velocity Boundary Field:").pack(anchor="w", padx=10)
+        velocity_bf = tk.Text(popup, height=5, width=70)
+        velocity_bf.pack(padx=10, pady=5)
+
+        ttk.Label(popup, text="Pressure Dimensions:").pack(anchor="w", padx=10)
+        pressure_dimensions = tk.Text(popup, height=5, width=70)
+        pressure_dimensions.pack(padx=10, pady=5)
+
+        ttk.Label(popup, text="Pressure Internal Field:").pack(anchor="w", padx=10)
+        pressure_if = tk.Text(popup, height=5, width=70)
+        pressure_if.pack(padx=10, pady=5)
+
+        ttk.Label(popup, text="Pressure Boundary Field:").pack(anchor="w", padx=10)
+        pressure_bf = tk.Text(popup, height=5, width=70)
+        pressure_bf.pack(padx=10, pady=5)
+
+        ttk.Button(popup, text="Submit", command=on_submit).pack(pady=10)
+
+        popup.transient(self.root)  # Make the window modal
+        popup.grab_set()
+        self.root.wait_window(popup)
+
+
+    
     def configure_and_generate_blockmesh(self):
         """Open a pop-up window for BlockMesh configuration and run the mesh generator."""
         def on_submit():
