@@ -50,12 +50,16 @@ class MeshGenerationApp:
         """Set up the Mesh Generation tab."""
         f = open("stl/stl_path.txt")
 
-        self.generate_mesh_button = ttk.Button(
-            self.mesh_tab,
-            text="Generate OpenFOAM Mesh (snappyHexMesh)",
-            command=lambda: generate_mesh(self, f.read()),
-        )
-        self.generate_mesh_button.pack(pady=10)
+        try:
+            self.generate_mesh_button = ttk.Button(
+                self.mesh_tab,
+                text="Generate OpenFOAM Mesh (snappyHexMesh)",
+                command=lambda: generate_mesh(self, f.read()),
+            )
+            self.generate_mesh_button.pack(pady=10)
+        except Exception as e:
+            print("STL Path: " + f.read())
+            messagebox.showerror("Error", f"Failed to generate mesh:\n{e}.")
 
         # Add BlockMesh functionality
         self.block_mesh_button = ttk.Button(

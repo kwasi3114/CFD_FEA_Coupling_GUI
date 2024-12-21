@@ -1,3 +1,4 @@
+import os
 from tkinter import filedialog, messagebox
 import pyvista as pv
 from PIL import Image, ImageTk
@@ -46,6 +47,10 @@ def load_and_display_stl(app):
         mesh = pv.read(output_path)
         write_path(output_path)
 
+        #stl_filename = output_path.split("/")[-1]
+        #write_surface_feature_extract_dict(stl_filename)
+        #run_surface_feature_extract()
+
         # Display STL file in PyVista plotter
         plotter = pv.Plotter(window_size=(600, 400), off_screen=True)
         plotter.add_mesh(mesh, color="lightblue")
@@ -70,3 +75,77 @@ def write_path(file_path):
     f = open("stl/stl_path.txt", "w")
     f.write(file_path)
     f.close()
+
+def write_surface_feature_extract_dict(stl_file):
+    """
+    Writes the surfaceFeatureExtractDict file to the specified system folder.
+
+    Parameters:
+    stl_file (str): The name of the STL file to be used.
+    system_folder (str): The folder where the surfaceFeatureExtractDict will be created.
+    """
+    import os 
+
+    openfoam_dir = "openfoam_case"
+    system_dir = os.path.join(openfoam_dir, "system")
+    os.makedirs(system_dir, exist_ok=True)
+    
+    # Path to the surfaceFeatureExtractDict file
+    dict_path = os.path.join(system_dir, "surfaceFeatureExtractDict")
+    
+    # Content of the surfaceFeatureExtractDict
+    dict_content = f"""\
+/*--------------------------------*- C++ -*----------------------------------*\\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\\*---------------------------------------------------------------------------*/
+FoamFile
+{{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      surfaceFeatureExtractDict;
+}}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+{stl_file}
+{{
+    // How to obtain raw features (extractFromFile || extractFromSurface)
+    extractionMethod    extractFromSurface;
+
+    extractFromSurfaceCoeffs
+    {{
+        // Mark edges whose adjacent surface normals are at an angle less
+        // than includedAngle as features
+        // - 0  : selects no edges
+        // - 180: selects all edges
+        includedAngle   150;
+    }}
+
+    // Write options
+
+        // Write features to obj format for postprocessing
+        writeObj                yes;
+}}
+// ************************************************************************* //
+"""
+    
+    # Write the dictionary file
+    with open(dict_path, "w") as file:
+        file.write(dict_content)
+    
+    print(f"surfaceFeatureExtractDict written to {dict_path}")
+
+def run_surface_feature_extract():
+    """
+    Runs the surfaceFeatureExtract command.
+    """
+    try:
+        openfoam_dir = "openfoam_case"
+        subprocess.run(["surfaceFeatureExtract", "-case", openfoam_dir], check=True)
+        print("surfaceFeatureExtract completed successfully.")
+    except subprocess.CalledProcessError as e:
+        print("Error while running surfaceFeatureExtract:", e)

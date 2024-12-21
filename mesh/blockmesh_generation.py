@@ -128,7 +128,6 @@ mergePatchPairs
         except Exception as e:
             print(f"Failed to visualize mesh: {e}")
 
-
 if __name__ == "__main__":
     generator = BlockMeshGenerator()
     generator.write_block_mesh_dict()

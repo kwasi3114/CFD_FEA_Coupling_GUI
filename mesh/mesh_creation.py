@@ -13,11 +13,21 @@ def generate_mesh(app, stl_path):
     #)
     #if not stl_file:
     #    return  # User canceled
-    stl_file = stl_path
+    print("STL Path: " + stl_path)
+    stl_file = stl_path.split("/")[-1]
+    emesh_file = stl_file.replace(".stl", ".eMesh")
+
 
     openfoam_dir = "openfoam_case"
     system_dir = os.path.join(openfoam_dir, "system")
+    constant_dir = os.path.join(openfoam_dir, "constant")
+    trisurface_dir = os.path.join(constant_dir, "triSurface")
+
+    stl_dir = os.path.join(constant_dir, stl_file)
+    emesh_dir = os.path.join(constant_dir, emesh_file)
+
     os.makedirs(system_dir, exist_ok=True)
+    os.makedirs(trisurface_dir, exist_ok=True)
 
     try:
         # Write snappyHexMeshDict
@@ -42,13 +52,30 @@ FoamFile
 castellatedMesh true;
 snap            true;
 addLayers       false;
+mergeTolerance 1e-6;
 
 geometry
 {{
-    mesh
+    {stl_file}
     {{
         type triSurfaceMesh;
-        file "{os.path.basename(stl_file)}";
+        name stl;
+
+    }};
+
+    box
+    {{
+        type searchableBox;
+        min (-10 -10 -10);
+        max (10 10 10);
+    }};
+
+    sphere
+    {{
+        type searchableSphere;
+        centre (0 0 0);
+        radius 15.0;
+
     }};
 }};
 
@@ -56,26 +83,105 @@ castellatedMeshControls
 {{
     maxLocalCells 100000;
     maxGlobalCells 2000000;
-    minRefinementCells 10;
-    nCellsBetweenLevels 3;
+    minRefinementCells 0;
+    nCellsBetweenLevels 1;
+
+    resolveFeatureAngle 30;
+    planarAngle 30;
+    allowFreeStandingZoneFaces true;
+
+    features
+    (
+        {{
+            file {emesh_file};
+            level 2;
+        }}
+    );
 
     refinementSurfaces
     {{
-        mesh
+        stl
         {{
             level (1 1);
-        }};
-    }};
+        }}
+
+        sphere
+        {{
+            level (1 1);
+            faceZone face_inner;
+            cellZone cell_inner;
+            cellZoneInside inside;
+        }}
+    }}
+
+    refinementRegions
+    {{
+        box
+        {{
+            mode inside;
+            levels ((1 1));
+        }}
+    }}
+
+    locationInMesh (0.0 0.0 0.25);
+}};
+
+snapControls
+{{
+    nSmoothPatch 3;
+    tolerance 2.0;
+    nSolveIter 30;
+    nRelaxIter 5;
+
+        nFeatureSnapIter 10;
+        implicitFeatureSnap false;
+        explicitFeatureSnap true;
+        multiRegionFeatureSnap false;
+}};
+
+addLayersControls
+{{
+    relativeSizes true;
+    expansionRatio 1.0;
+    finalLayerThickness 0.3;
+    minThickness 0.25;
+
+    layers
+    {{
+
+    }}
+}};
+
+meshQualityControls
+{{
+    maxNonOrtho 75;
+    maxBoundarySkewness 20;
+    maxInternalSkewness 4;
+    maxConcave 80;
+    minVol 1.00E-13;
+    minTetQuality 1e15;
+    minArea -1;
+    minTwist 0.02;
+    minDeterminant 0.001;
+    minFaceWeight 0.05;
+    minVolRatio 0.01;
+    minTriangleTwist -1;
+    minFlatness 0.5;
+    nSmoothScale 4;
+    errorReduction 0.75;
 }};
 """
 
         with open(os.path.join(system_dir, "snappyHexMeshDict"), "w") as f:
             f.write(snappyhexmesh_dict)
+        
+        print("Wrote snappyHexMeshDict")
 
         # Copy STL file into OpenFOAM case directory
-        tri_surface_dir = os.path.join(openfoam_dir, "constant/triSurface")
-        os.makedirs(tri_surface_dir, exist_ok=True)
-        shutil.copy(stl_file, os.path.join(tri_surface_dir, os.path.basename(stl_file)))
+        #tri_surface_dir = os.path.join(openfoam_dir, "constant/triSurface")
+        #os.makedirs(tri_surface_dir, exist_ok=True)
+        #shutil.copy(stl_file, os.path.join(tri_surface_dir, os.path.basename(stl_file)))
+        shutil.copy(stl_path, stl_dir)
 
         # Run snappyHexMesh
         app.log_message("Running snappyHexMesh...")
