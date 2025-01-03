@@ -1,0 +1,8 @@
+{
+  "file-series-version" : "1.0",
+  "files" : [
+    { "name" : "openfoam_case_0.vtm", "time" : 0 },
+    { "name" : "openfoam_case_1.vtm", "time" : 0.005 },
+    { "name" : "openfoam_case_2.vtm", "time" : 0.01 }
+  ]
+}
