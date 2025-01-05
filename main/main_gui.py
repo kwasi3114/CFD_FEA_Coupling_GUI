@@ -46,6 +46,11 @@ class MeshGenerationApp:
         self.coupled_solve_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.coupled_solve_tab, text="Coupled Solver")
         self.setup_coupled_solve_tab()
+        
+        # Add Post-Processing & Visualization Tab
+        self.visual_pp_tab = ttk.Frame(self.notebook)
+        self.notebook.add(self.visual_pp_tab, text="Visualization and Post-Processing")
+        self.setup_visual_pp_tab()
 
     def setup_stl_tab(self):
         """Set up the STL Viewer tab."""
@@ -127,16 +132,16 @@ class MeshGenerationApp:
 
     def setup_fea_solve_tab(self):
         """setup solve tab"""
-        self.params_button = ttk.Button(
-            self.fea_solve_tab,
-            text="Generate Param Files for solids4Foam Solver",
-            command=lambda: self.configure_params('fea'),
-        )
-        self.params_button.pack(pady=10)
+        #self.params_button = ttk.Button(
+        #    self.fea_solve_tab,
+        #    text="Generate Param Files for solids4Foam Solver",
+        #    command=lambda: self.configure_params('fea'),
+        #)
+        #self.params_button.pack(pady=10)
 
         self.fea_solve_button = ttk.Button(
             self.fea_solve_tab,
-            text="Run solids4Foam Solver",
+            text="Run Fenics Solver",
             command=lambda: run_solvers('fea')
         )
         self.fea_solve_button.pack(pady=10)
@@ -153,14 +158,14 @@ class MeshGenerationApp:
         """setup solve tab"""
         self.params_button = ttk.Button(
             self.coupled_solve_tab,
-            text="Generate Param Files for pimpleFoam and solids4Foam Solver",
-            command=lambda: self.configure_params('coupled'),
+            text="Generate Param Files for pimpleFoam Solver",
+            command=lambda: self.configure_params('cfd'),
         )
         self.params_button.pack(pady=10)
 
         self.coupled_solve_button = ttk.Button(
             self.coupled_solve_tab,
-            text="Run pimpleFoam and solids4Foam Solvers",
+            text="Run pimpleFoam and Fenics Solvers",
             command=lambda: run_solvers('coupled')
         )
         self.coupled_solve_button.pack(pady=10)
@@ -172,6 +177,10 @@ class MeshGenerationApp:
         self.log_text = tk.Text(self.log_frame, wrap=tk.WORD, state=tk.DISABLED, height=15)
         self.log_text.pack(fill=tk.BOTH, expand=True)
 
+    def setup_visual_pp_tab(self):
+    	"""setup visualization and post-processing tab"""
+    	
+    
     def configure_params(self, operation):
         """Open pop-up..."""
         def on_submit():

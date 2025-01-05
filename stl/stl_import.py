@@ -3,6 +3,7 @@ from tkinter import filedialog, messagebox
 import pyvista as pv
 from PIL import Image, ImageTk
 import subprocess
+import meshio
 
 def load_and_display_stl(app):
     """Load and display an STL file."""
@@ -43,6 +44,16 @@ def load_and_display_stl(app):
 
         subprocess.run(command, check=True)
         print(f"STL file successfully transformed: {output_path}")
+        
+        # Use meshio to convert the transformed STL file to XDMF
+        xdmf_path = output_path.replace(".stl", ".xdmf")
+        convert_command = ["meshio", "convert", output_path, xdmf_path]
+        
+        try:
+            subprocess.run(convert_command, check=True)
+            print(f"STL file successfully converted to XDMF: {xdmf_path}")
+        except subprocess.CalledProcessError as e:
+            print(f"Error during mesh conversion: {e}")
 
         mesh = pv.read(output_path)
         write_path(output_path)

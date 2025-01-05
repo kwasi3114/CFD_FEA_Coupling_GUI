@@ -35,8 +35,18 @@ boundaryField
     {
         type            zeroGradient;
     }
+    
+    upperWall
+    {
+        type            zeroGradient;
+    }
 
     stl
+    {
+        type            zeroGradient;
+    }
+    
+    frontAndBack
     {
         type            zeroGradient;
     }

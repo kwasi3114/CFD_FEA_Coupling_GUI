@@ -18,7 +18,7 @@ mu = E / (2 * (1 + nu))
 lambda_ = E * nu / ((1 + nu) * (1 - 2 * nu))
 
 # Load OpenFOAM mesh
-mesh_file = "your_mesh.xdmf"  # Replace with your .xdmf file
+mesh_file = "/home/kwasi_dp/CFD_FEA_Coupling_GUI/stl/tesla_translated.xdmf"
 mesh = load_mesh(mesh_file)
 
 # Define function space
